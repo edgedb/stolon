@@ -1502,7 +1502,7 @@ func (p *PostgresKeeper) postgresKeeperSM(pctx context.Context) {
 	switch targetRole {
 	case common.RoleMaster:
 		// We are the elected master
-		log.Infow("our db requested role is master")
+		log.Debugw("our db requested role is master")
 		if localRole == common.RoleUndefined {
 			log.Errorw("database cluster not initialized but requested role is master. This shouldn't happen!")
 			return
@@ -1540,7 +1540,7 @@ func (p *PostgresKeeper) postgresKeeperSM(pctx context.Context) {
 				return
 			}
 		} else {
-			log.Infow("already master")
+			log.Debugw("already master")
 		}
 
 		if err := p.refreshReplicationSlots(cd, db); err != nil {
@@ -1554,7 +1554,7 @@ func (p *PostgresKeeper) postgresKeeperSM(pctx context.Context) {
 		switch db.Spec.FollowConfig.Type {
 		case cluster.FollowTypeInternal:
 			followedUID := db.Spec.FollowConfig.DBUID
-			log.Infow("our db requested role is standby", "followedDB", followedUID)
+			log.Debugw("our db requested role is standby", "followedDB", followedUID)
 			followedDB, ok := cd.DBs[followedUID]
 			if !ok {
 				log.Errorw("no db data available for followed db", "followedDB", followedUID)
@@ -1573,7 +1573,7 @@ func (p *PostgresKeeper) postgresKeeperSM(pctx context.Context) {
 			log.Errorw("cannot move from master role to standby role")
 			return
 		case common.RoleStandby:
-			log.Infow("already standby")
+			log.Debugw("already standby")
 			started, err := pgm.IsStarted()
 			if err != nil {
 				log.Errorw("failed to retrieve instance status", zap.Error(err))
@@ -1673,7 +1673,7 @@ func (p *PostgresKeeper) postgresKeeperSM(pctx context.Context) {
 		needsReload = true
 	} else {
 		// for tests
-		log.Infow("postgres parameters not changed")
+		log.Debugw("postgres parameters not changed")
 	}
 
 	// Generate hba auth from clusterData
@@ -1700,7 +1700,7 @@ func (p *PostgresKeeper) postgresKeeperSM(pctx context.Context) {
 		needsReload = true
 	} else {
 		// for tests
-		log.Infow("postgres hba entries not changed")
+		log.Debugw("postgres hba entries not changed")
 	}
 
 	if needsReload {

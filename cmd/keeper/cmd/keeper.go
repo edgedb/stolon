@@ -2103,8 +2103,24 @@ func keeper(c *cobra.Command, args []string) {
 	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
 	go sigHandler(sigs, cancel)
 
+	p, err := NewPostgresKeeper(&cfg, end)
+	if err != nil {
+		log.Fatalf("cannot create keeper: %v", err)
+	}
+	go p.Start(ctx)
+
 	if cfg.MetricsListenAddress != "" {
 		http.Handle("/metrics", promhttp.Handler())
+		http.Handle("/health/postgres", http.HandlerFunc(
+			func(w http.ResponseWriter, r *http.Request) {
+				if p.lastPGState.Healthy {
+					w.WriteHeader(http.StatusOK)
+					fmt.Fprintf(w, "{\"status\":\"OK\"}")
+				} else {
+					w.WriteHeader(http.StatusServiceUnavailable)
+				}
+			},
+		))
 		go func() {
 			err = http.ListenAndServe(cfg.MetricsListenAddress, nil)
 			if err != nil {
@@ -2113,12 +2129,6 @@ func keeper(c *cobra.Command, args []string) {
 			}
 		}()
 	}
-
-	p, err := NewPostgresKeeper(&cfg, end)
-	if err != nil {
-		log.Fatalf("cannot create keeper: %v", err)
-	}
-	go p.Start(ctx)
 
 	<-end
 

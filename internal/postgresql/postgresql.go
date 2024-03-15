@@ -963,7 +963,7 @@ func (p *Manager) SyncFromFollowed(followedConnParams ConnParams, replSlot strin
 
 	log.Infow("running pg_basebackup")
 	name := filepath.Join(p.pgBinPath, "pg_basebackup")
-	args := []string{"-R", "-v", "-P", "-Xs", "-D", p.dataDir, "-d", followedConnString}
+	args := []string{"-R", "-v", "-P", "-Xs", "-cfast", "-D", p.dataDir, "-d", followedConnString}
 	if replSlot != "" {
 		args = append(args, "--slot", replSlot)
 	}

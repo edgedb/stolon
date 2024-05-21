@@ -149,9 +149,10 @@ const (
 )
 
 type NewConfig struct {
-	Locale        string `json:"locale,omitempty"`
-	Encoding      string `json:"encoding,omitempty"`
-	DataChecksums bool   `json:"dataChecksums,omitempty"`
+	Locale          string `json:"locale,omitempty"`
+	Encoding        string `json:"encoding,omitempty"`
+	DataChecksums   bool   `json:"dataChecksums,omitempty"`
+	PreserveDataDir bool   `json:"preserveDatadir,omitempty"`
 }
 
 type PITRConfig struct {

@@ -1164,23 +1164,34 @@ func (p *PostgresKeeper) postgresKeeperSM(pctx context.Context) {
 
 			initConfig := &pg.InitConfig{}
 
+			preserveDataDir := false
 			if db.Spec.NewConfig != nil {
 				initConfig.Locale = db.Spec.NewConfig.Locale
 				initConfig.Encoding = db.Spec.NewConfig.Encoding
 				initConfig.DataChecksums = db.Spec.NewConfig.DataChecksums
+				preserveDataDir = db.Spec.NewConfig.PreserveDataDir
 			}
 
 			if err = pgm.StopIfStarted(true); err != nil {
 				log.Errorw("failed to stop pg instance", zap.Error(err))
 				return
 			}
-			if err = pgm.RemoveAll(); err != nil {
-				log.Errorw("failed to remove the postgres data dir", zap.Error(err))
+
+			initialized, err := pgm.IsInitialized()
+			if err != nil {
+				log.Errorw("could not query data dir state", zap.Error(err))
 				return
 			}
-			if err = pgm.Init(initConfig); err != nil {
-				log.Errorw("failed to initialize postgres database cluster", zap.Error(err))
-				return
+
+			if !initialized || !preserveDataDir {
+				if err = pgm.RemoveAll(); err != nil {
+					log.Errorw("failed to remove the postgres data dir", zap.Error(err))
+					return
+				}
+				if err = pgm.Init(initConfig); err != nil {
+					log.Errorw("failed to initialize postgres database cluster", zap.Error(err))
+					return
+				}
 			}
 
 			if err = pgm.StartTmpMerged(); err != nil {
@@ -1204,10 +1215,12 @@ func (p *PostgresKeeper) postgresKeeperSM(pctx context.Context) {
 				}
 			}
 
-			log.Infow("setting roles")
-			if err = pgm.SetupRoles(); err != nil {
-				log.Errorw("failed to setup roles", zap.Error(err))
-				return
+			if !initialized || !preserveDataDir {
+				log.Infow("setting roles")
+				if err = pgm.SetupRoles(); err != nil {
+					log.Errorw("failed to setup roles", zap.Error(err))
+					return
+				}
 			}
 
 			if err = pgm.StopIfStarted(true); err != nil {

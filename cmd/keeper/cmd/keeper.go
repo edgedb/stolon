@@ -639,16 +639,22 @@ func (p *PostgresKeeper) updatePGState(pctx context.Context) {
 //
 // Since postgres 9.6 (https://www.postgresql.org/docs/9.6/static/runtime-config-replication.html)
 // `synchronous_standby_names` can be in one of two formats:
-//   num_sync ( standby_name [, ...] )
-//   standby_name [, ...]
+//
+//	num_sync ( standby_name [, ...] )
+//	standby_name [, ...]
+//
 // two examples for this:
-//   2 (node1,node2)
-//   node1,node2
+//
+//	2 (node1,node2)
+//	node1,node2
+//
 // TODO(sgotti) since postgres 10 (https://www.postgresql.org/docs/10/static/runtime-config-replication.html)
 // `synchronous_standby_names` can be in one of three formats:
-//   [FIRST] num_sync ( standby_name [, ...] )
-//   ANY num_sync ( standby_name [, ...] )
-//   standby_name [, ...]
+//
+//	[FIRST] num_sync ( standby_name [, ...] )
+//	ANY num_sync ( standby_name [, ...] )
+//	standby_name [, ...]
+//
 // since we are writing ourself the synchronous_standby_names we don't handle this case.
 // If needed, to better handle all the cases with also a better validation of
 // standby names we could use something like the parser used by postgres
@@ -828,9 +834,17 @@ func (p *PostgresKeeper) Start(ctx context.Context) {
 
 	_ = p.pgm.StopIfStarted(true)
 
-	smTimerCh := time.NewTimer(0).C
-	updatePGStateTimerCh := time.NewTimer(0).C
-	updateKeeperInfoTimerCh := time.NewTimer(0).C
+	p.postgresKeeperSM(ctx, false)
+	p.updatePGState(ctx)
+	if err := p.updateKeeperInfo(); err != nil {
+		log.Errorw("failed to update keeper info", zap.Error(err))
+		return
+	}
+	p.postgresKeeperSM(ctx, true)
+
+	smTimerCh := time.NewTimer(p.sleepInterval).C
+	updatePGStateTimerCh := time.NewTimer(p.sleepInterval / 2).C
+	updateKeeperInfoTimerCh := time.NewTimer(p.sleepInterval).C
 	for {
 		// The sleepInterval can be updated during normal execution. Ensure we regularly
 		// refresh the metric to account for those changes.
@@ -847,7 +861,7 @@ func (p *PostgresKeeper) Start(ctx context.Context) {
 
 		case <-smTimerCh:
 			go func() {
-				p.postgresKeeperSM(ctx)
+				p.postgresKeeperSM(ctx, false)
 				endSMCh <- struct{}{}
 			}()
 
@@ -1033,7 +1047,7 @@ func (p *PostgresKeeper) refreshReplicationSlots(cd *cluster.ClusterData, db *cl
 	return nil
 }
 
-func (p *PostgresKeeper) postgresKeeperSM(pctx context.Context) {
+func (p *PostgresKeeper) postgresKeeperSM(pctx context.Context, blocking bool) {
 	e := p.e
 	pgm := p.pgm
 

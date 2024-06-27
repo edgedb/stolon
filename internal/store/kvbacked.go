@@ -92,7 +92,7 @@ type KVStore interface {
 	Get(ctx context.Context, key string) (*KVPair, error)
 
 	// List the content of a given prefix
-	List(ctx context.Context, directory string) ([]*KVPair, error)
+	List(ctx context.Context, directory string, blocking bool) ([]*KVPair, error)
 
 	// Atomic CAS operation on a single value.
 	// Pass previous = nil to create a new key.
@@ -266,9 +266,9 @@ func (s *KVBackedStore) SetKeeperInfo(ctx context.Context, id string, ms *cluste
 	return s.store.Put(ctx, filepath.Join(s.clusterPath, keepersInfoDir, id), msj, &WriteOptions{TTL: ttl})
 }
 
-func (s *KVBackedStore) GetKeepersInfo(ctx context.Context) (cluster.KeepersInfo, error) {
+func (s *KVBackedStore) GetKeepersInfo(ctx context.Context, blocking bool) (cluster.KeepersInfo, error) {
 	keepers := cluster.KeepersInfo{}
-	pairs, err := s.store.List(ctx, filepath.Join(s.clusterPath, keepersInfoDir))
+	pairs, err := s.store.List(ctx, filepath.Join(s.clusterPath, keepersInfoDir), blocking)
 	if err != nil {
 		if err != ErrKeyNotFound {
 			return nil, err
@@ -299,7 +299,7 @@ func (s *KVBackedStore) SetSentinelInfo(ctx context.Context, si *cluster.Sentine
 
 func (s *KVBackedStore) GetSentinelsInfo(ctx context.Context) (cluster.SentinelsInfo, error) {
 	ssi := cluster.SentinelsInfo{}
-	pairs, err := s.store.List(ctx, filepath.Join(s.clusterPath, sentinelsInfoDir))
+	pairs, err := s.store.List(ctx, filepath.Join(s.clusterPath, sentinelsInfoDir), false)
 	if err != nil {
 		if err != ErrKeyNotFound {
 			return nil, err
@@ -330,7 +330,7 @@ func (s *KVBackedStore) SetProxyInfo(ctx context.Context, pi *cluster.ProxyInfo,
 
 func (s *KVBackedStore) GetProxiesInfo(ctx context.Context) (cluster.ProxiesInfo, error) {
 	psi := cluster.ProxiesInfo{}
-	pairs, err := s.store.List(ctx, filepath.Join(s.clusterPath, proxiesInfoDir))
+	pairs, err := s.store.List(ctx, filepath.Join(s.clusterPath, proxiesInfoDir), false)
 	if err != nil {
 		if err != ErrKeyNotFound {
 			return nil, err

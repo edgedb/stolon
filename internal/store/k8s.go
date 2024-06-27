@@ -252,7 +252,7 @@ func (s *KubeStore) SetKeeperInfo(ctx context.Context, id string, ms *cluster.Ke
 	return s.patchKubeStatusAnnotation(msj)
 }
 
-func (s *KubeStore) GetKeepersInfo(ctx context.Context) (cluster.KeepersInfo, error) {
+func (s *KubeStore) GetKeepersInfo(ctx context.Context, blocking bool) (cluster.KeepersInfo, error) {
 	keepers := cluster.KeepersInfo{}
 
 	podsClient := s.client.CoreV1().Pods(s.namespace)

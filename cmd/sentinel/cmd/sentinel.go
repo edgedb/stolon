@@ -1804,6 +1804,8 @@ func NewSentinel(uid string, cfg *config, end chan bool) (*Sentinel, error) {
 }
 
 func (s *Sentinel) Start(ctx context.Context) {
+	s.clusterSentinelCheck(ctx, true)
+
 	endCh := make(chan struct{})
 
 	timerCh := time.NewTimer(0).C
@@ -1818,7 +1820,7 @@ func (s *Sentinel) Start(ctx context.Context) {
 			return
 		case <-timerCh:
 			go func() {
-				s.clusterSentinelCheck(ctx)
+				s.clusterSentinelCheck(ctx, false)
 				endCh <- struct{}{}
 			}()
 		case <-endCh:
@@ -1833,7 +1835,7 @@ func (s *Sentinel) leaderInfo() (bool, uint) {
 	return s.leader, s.leadershipCount
 }
 
-func (s *Sentinel) clusterSentinelCheck(pctx context.Context) {
+func (s *Sentinel) clusterSentinelCheck(pctx context.Context, blocking bool) {
 	s.updateMutex.Lock()
 	defer s.updateMutex.Unlock()
 	e := s.e
@@ -1881,7 +1883,7 @@ func (s *Sentinel) clusterSentinelCheck(pctx context.Context) {
 		return
 	}
 
-	keepersInfo, err := s.e.GetKeepersInfo(pctx)
+	keepersInfo, err := s.e.GetKeepersInfo(pctx, blocking)
 	if err != nil {
 		log.Errorw("cannot get keepers info", zap.Error(err))
 		return

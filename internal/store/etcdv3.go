@@ -16,6 +16,7 @@ package store
 
 import (
 	"context"
+	"errors"
 	"time"
 
 	etcdclientv3 "go.etcd.io/etcd/clientv3"
@@ -69,6 +70,10 @@ func (s *etcdV3Store) Get(pctx context.Context, key string) (*KVPair, error) {
 	}
 	kv := resp.Kvs[0]
 	return &KVPair{Key: string(kv.Key), Value: kv.Value, LastIndex: uint64(kv.ModRevision)}, nil
+}
+
+func (s *etcdV3Store) Watch(ctx context.Context, key string, stopCh <-chan struct{}) (<-chan *KVPair, error) {
+	return nil, errors.New("not implemented")
 }
 
 func (s *etcdV3Store) List(pctx context.Context, directory string, blocking bool) ([]*KVPair, error) {

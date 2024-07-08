@@ -91,6 +91,9 @@ type KVStore interface {
 	// Get a value given its key
 	Get(ctx context.Context, key string) (*KVPair, error)
 
+	// Watch a key for its values
+	Watch(ctx context.Context, key string, stopCh <-chan struct{}) (<-chan *KVPair, error)
+
 	// List the content of a given prefix
 	List(ctx context.Context, directory string, blocking bool) ([]*KVPair, error)
 
@@ -253,6 +256,31 @@ func (s *KVBackedStore) GetClusterData(ctx context.Context) (*cluster.ClusterDat
 		return nil, nil, err
 	}
 	return cd, pair, nil
+}
+
+func (s *KVBackedStore) WatchClusterData(ctx context.Context, stopChan <-chan struct{}) (<-chan ClusterDataWithPrev, error) {
+	var cd *cluster.ClusterData
+	outCh := make(chan ClusterDataWithPrev)
+	path := filepath.Join(s.clusterPath, clusterDataFile)
+	watchCh, err := s.store.Watch(ctx, path, stopChan)
+	if err != nil {
+		return nil, err
+	}
+	go func() {
+		defer close(outCh)
+		for {
+			pair, ok := <-watchCh
+			if !ok {
+				return
+			}
+			if err := json.Unmarshal(pair.Value, &cd); err != nil {
+				// yield?
+			} else {
+				outCh <- ClusterDataWithPrev{cd, pair}
+			}
+		}
+	}()
+	return outCh, nil
 }
 
 func (s *KVBackedStore) SetKeeperInfo(ctx context.Context, id string, ms *cluster.KeeperInfo, ttl time.Duration) error {

@@ -31,10 +31,16 @@ var (
 	ErrElectionNoLeader = errors.New("election: no leader")
 )
 
+type ClusterDataWithPrev struct {
+	Cd   *cluster.ClusterData
+	prev *KVPair
+}
+
 type Store interface {
 	AtomicPutClusterData(ctx context.Context, cd *cluster.ClusterData, previous *KVPair) (*KVPair, error)
 	PutClusterData(ctx context.Context, cd *cluster.ClusterData) error
 	GetClusterData(ctx context.Context) (*cluster.ClusterData, *KVPair, error)
+	WatchClusterData(ctx context.Context, stopChan <-chan struct{}) (<-chan ClusterDataWithPrev, error)
 	SetKeeperInfo(ctx context.Context, id string, ms *cluster.KeeperInfo, ttl time.Duration) error
 	GetKeepersInfo(ctx context.Context, blocking bool) (cluster.KeepersInfo, error)
 	SetSentinelInfo(ctx context.Context, si *cluster.SentinelInfo, ttl time.Duration) error

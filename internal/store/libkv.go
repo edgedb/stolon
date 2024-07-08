@@ -58,6 +58,25 @@ func (s *libKVStore) Get(ctx context.Context, key string) (*KVPair, error) {
 	return &KVPair{Key: pair.Key, Value: pair.Value, LastIndex: pair.LastIndex}, nil
 }
 
+func (s *libKVStore) Watch(ctx context.Context, key string, stopCh <-chan struct{}) (<-chan *KVPair, error) {
+	outCh := make(chan *KVPair)
+	watchCh, err := s.store.Watch(key, stopCh)
+	if err != nil {
+		return nil, fromLibKVStoreErr(err)
+	}
+	go func() {
+		defer close(outCh)
+		for {
+			pair, ok := <-watchCh
+			if !ok {
+				return
+			}
+			outCh <- &KVPair{Key: pair.Key, Value: pair.Value, LastIndex: pair.LastIndex}
+		}
+	}()
+	return outCh, nil
+}
+
 func (s *libKVStore) List(ctx context.Context, directory string, blocking bool) ([]*KVPair, error) {
 	exists, err := s.store.Exists(directory)
 	if err != nil {

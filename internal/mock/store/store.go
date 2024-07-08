@@ -6,6 +6,7 @@ package mock_store
 
 import (
 	context "context"
+	"errors"
 	gomock "github.com/golang/mock/gomock"
 	cluster "github.com/sorintlab/stolon/internal/cluster"
 	store "github.com/sorintlab/stolon/internal/store"
@@ -68,6 +69,10 @@ func (m *MockStore) GetClusterData(ctx context.Context) (*cluster.ClusterData, *
 	ret1, _ := ret[1].(*store.KVPair)
 	ret2, _ := ret[2].(error)
 	return ret0, ret1, ret2
+}
+
+func (m *MockStore) WatchClusterData(ctx context.Context, stopChan <-chan struct{}) (<-chan store.ClusterDataWithPrev, error) {
+	return nil, errors.New("not implemented")
 }
 
 // GetClusterData indicates an expected call of GetClusterData

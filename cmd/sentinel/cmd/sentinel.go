@@ -78,12 +78,20 @@ func init() {
 }
 
 func (s *Sentinel) electionLoop(ctx context.Context) {
+	first := true
 	for {
 		log.Infow("Trying to acquire sentinels leadership")
 		electedCh, errCh := s.election.RunForElection()
 		for {
 			select {
 			case elected := <-electedCh:
+				if first {
+					first = false
+					// Skip the initial "false" elected event that is always delivered immediately
+					if !elected && s.leader {
+						continue
+					}
+				}
 				s.leaderMutex.Lock()
 				if elected {
 					log.Infow("sentinel leadership acquired")
@@ -1789,7 +1797,8 @@ func NewSentinel(uid string, cfg *config, end chan bool) (*Sentinel, error) {
 		cfg:                cfg,
 		e:                  e,
 		election:           election,
-		leader:             false,
+		leader:             true, // assume we are the leader to start
+		leadershipCount:    1,    // start with new leadership status
 		initialClusterSpec: initialClusterSpec,
 		end:                end,
 		UIDFn:              common.UID,
@@ -1804,7 +1813,16 @@ func NewSentinel(uid string, cfg *config, end chan bool) (*Sentinel, error) {
 }
 
 func (s *Sentinel) Start(ctx context.Context) {
+
+	// Run sentinel check twice with blocking=true at start, because the first
+	// run won't touch keeper state, see updateKeepersStatus()
+	log.Infow("waiting for keepers info to show up")
 	s.clusterSentinelCheck(ctx, true)
+	s.lastLeadershipCount = s.leadershipCount // simulate leadership acquisition
+	s.clusterSentinelCheck(ctx, true)         // initialize cluster
+	s.clusterSentinelCheck(ctx, true)         // initialize cluster
+
+	// wait for db
 
 	endCh := make(chan struct{})
 
@@ -1883,12 +1901,20 @@ func (s *Sentinel) clusterSentinelCheck(pctx context.Context, blocking bool) {
 		return
 	}
 
-	keepersInfo, err := s.e.GetKeepersInfo(pctx, blocking)
-	if err != nil {
-		log.Errorw("cannot get keepers info", zap.Error(err))
-		return
+	var keepersInfo cluster.KeepersInfo
+	for {
+		keepersInfo, err = s.e.GetKeepersInfo(pctx, blocking)
+		if err == nil {
+			log.Debugf("keepersInfo dump: %s", spew.Sdump(keepersInfo))
+			if blocking {
+				log.Infof("detected %d keepers", len(keepersInfo))
+			}
+			break
+		} else if !blocking {
+			log.Errorw("cannot get keepers info", zap.Error(err))
+			return
+		}
 	}
-	log.Debugf("keepersInfo dump: %s", spew.Sdump(keepersInfo))
 
 	proxiesInfo, err := s.e.GetProxiesInfo(pctx)
 	if err != nil {
@@ -1929,7 +1955,9 @@ func (s *Sentinel) clusterSentinelCheck(pctx context.Context, blocking bool) {
 
 	newcd, err = s.updateCluster(newcd, activeProxiesInfos)
 	if err != nil {
-		log.Errorw("failed to update cluster data", zap.Error(err))
+		if !firstRun && blocking {
+			log.Errorw("failed to update cluster data", zap.Error(err))
+		}
 		return
 	}
 	log.Debugf("newcd dump after updateCluster: %s", spew.Sdump(newcd))

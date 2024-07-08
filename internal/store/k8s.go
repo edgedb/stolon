@@ -17,6 +17,7 @@ package store
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"time"
 
@@ -244,6 +245,10 @@ func (s *KubeStore) GetClusterData(ctx context.Context) (*cluster.ClusterData, *
 	return cd, &KVPair{Value: []byte(cdj)}, nil
 }
 
+func (s *KubeStore) WatchClusterData(ctx context.Context, stopChan <-chan struct{}) (<-chan ClusterDataWithPrev, error) {
+	return nil, errors.New("not implemented")
+}
+
 func (s *KubeStore) SetKeeperInfo(ctx context.Context, id string, ms *cluster.KeeperInfo, ttl time.Duration) error {
 	msj, err := json.Marshal(ms)
 	if err != nil {
@@ -252,7 +257,7 @@ func (s *KubeStore) SetKeeperInfo(ctx context.Context, id string, ms *cluster.Ke
 	return s.patchKubeStatusAnnotation(msj)
 }
 
-func (s *KubeStore) GetKeepersInfo(ctx context.Context) (cluster.KeepersInfo, error) {
+func (s *KubeStore) GetKeepersInfo(ctx context.Context, blocking bool) (cluster.KeepersInfo, error) {
 	keepers := cluster.KeepersInfo{}
 
 	podsClient := s.client.CoreV1().Pods(s.namespace)

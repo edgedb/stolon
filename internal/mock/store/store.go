@@ -6,6 +6,7 @@ package mock_store
 
 import (
 	context "context"
+	"errors"
 	gomock "github.com/golang/mock/gomock"
 	cluster "github.com/sorintlab/stolon/internal/cluster"
 	store "github.com/sorintlab/stolon/internal/store"
@@ -70,6 +71,10 @@ func (m *MockStore) GetClusterData(ctx context.Context) (*cluster.ClusterData, *
 	return ret0, ret1, ret2
 }
 
+func (m *MockStore) WatchClusterData(ctx context.Context, stopChan <-chan struct{}) (<-chan store.ClusterDataWithPrev, error) {
+	return nil, errors.New("not implemented")
+}
+
 // GetClusterData indicates an expected call of GetClusterData
 func (mr *MockStoreMockRecorder) GetClusterData(ctx interface{}) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetClusterData", reflect.TypeOf((*MockStore)(nil).GetClusterData), ctx)
@@ -88,16 +93,16 @@ func (mr *MockStoreMockRecorder) SetKeeperInfo(ctx, id, ms, ttl interface{}) *go
 }
 
 // GetKeepersInfo mocks base method
-func (m *MockStore) GetKeepersInfo(ctx context.Context) (cluster.KeepersInfo, error) {
-	ret := m.ctrl.Call(m, "GetKeepersInfo", ctx)
+func (m *MockStore) GetKeepersInfo(ctx context.Context, blocking bool) (cluster.KeepersInfo, error) {
+	ret := m.ctrl.Call(m, "GetKeepersInfo", ctx, blocking)
 	ret0, _ := ret[0].(cluster.KeepersInfo)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GetKeepersInfo indicates an expected call of GetKeepersInfo
-func (mr *MockStoreMockRecorder) GetKeepersInfo(ctx interface{}) *gomock.Call {
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetKeepersInfo", reflect.TypeOf((*MockStore)(nil).GetKeepersInfo), ctx)
+func (mr *MockStoreMockRecorder) GetKeepersInfo(ctx interface{}, blocking bool) *gomock.Call {
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetKeepersInfo", reflect.TypeOf((*MockStore)(nil).GetKeepersInfo), ctx, blocking)
 }
 
 // SetSentinelInfo mocks base method

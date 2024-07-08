@@ -16,7 +16,6 @@ package store
 
 import (
 	"context"
-
 	"github.com/docker/leadership"
 	libkvstore "github.com/docker/libkv/store"
 	"github.com/docker/libkv/store/consul"
@@ -59,16 +58,67 @@ func (s *libKVStore) Get(ctx context.Context, key string) (*KVPair, error) {
 	return &KVPair{Key: pair.Key, Value: pair.Value, LastIndex: pair.LastIndex}, nil
 }
 
-func (s *libKVStore) List(ctx context.Context, directory string) ([]*KVPair, error) {
-	pairs, err := s.store.List(directory)
+func (s *libKVStore) Watch(ctx context.Context, key string, stopCh <-chan struct{}) (<-chan *KVPair, error) {
+	outCh := make(chan *KVPair)
+	watchCh, err := s.store.Watch(key, stopCh)
 	if err != nil {
 		return nil, fromLibKVStoreErr(err)
 	}
-	kvPairs := make([]*KVPair, len(pairs))
-	for i, p := range pairs {
-		kvPairs[i] = &KVPair{Key: p.Key, Value: p.Value, LastIndex: p.LastIndex}
+	go func() {
+		defer close(outCh)
+		for {
+			pair, ok := <-watchCh
+			if !ok {
+				return
+			}
+			outCh <- &KVPair{Key: pair.Key, Value: pair.Value, LastIndex: pair.LastIndex}
+		}
+	}()
+	return outCh, nil
+}
+
+func (s *libKVStore) List(ctx context.Context, directory string, blocking bool) ([]*KVPair, error) {
+	exists, err := s.store.Exists(directory)
+	if err != nil {
+		return nil, fromLibKVStoreErr(err)
 	}
-	return kvPairs, nil
+	if !exists {
+		err := s.store.Put(directory, []byte("bar"), &libkvstore.WriteOptions{IsDir: true})
+		if err != nil {
+			return nil, fromLibKVStoreErr(err)
+		}
+	}
+	for i := 0; i < 2; i++ {
+		pairs, err := s.store.List(directory)
+		if err != nil {
+			return nil, fromLibKVStoreErr(err)
+		}
+		if i == 0 && blocking && len(pairs) == 0 {
+			stopCh := make(chan struct{})
+			events, err := s.store.WatchTree(directory, stopCh)
+			if err != nil {
+				return nil, fromLibKVStoreErr(err)
+			}
+			waiting := true
+			for waiting {
+				select {
+				case <-ctx.Done():
+					waiting = false
+				case pairs := <-events:
+					waiting = len(pairs) == 0
+				case <-stopCh:
+					waiting = false
+				}
+			}
+		} else {
+			kvPairs := make([]*KVPair, len(pairs))
+			for i, p := range pairs {
+				kvPairs[i] = &KVPair{Key: p.Key, Value: p.Value, LastIndex: p.LastIndex}
+			}
+			return kvPairs, nil
+		}
+	}
+	panic("unreachable")
 }
 
 func (s *libKVStore) AtomicPut(ctx context.Context, key string, value []byte, previous *KVPair, options *WriteOptions) (*KVPair, error) {

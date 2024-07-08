@@ -245,7 +245,7 @@ func (s *KVBackedStore) PutClusterData(ctx context.Context, cd *cluster.ClusterD
 	return s.store.Put(ctx, path, cdj, nil)
 }
 
-func (s *KVBackedStore) GetClusterData(ctx context.Context) (*cluster.ClusterData, *KVPair, error) {
+func (s *KVBackedStore) GetClusterData(ctx context.Context, wait bool) (*cluster.ClusterData, *KVPair, error) {
 	var cd *cluster.ClusterData
 	path := filepath.Join(s.clusterPath, clusterDataFile)
 	pair, err := s.store.Get(ctx, path)
@@ -253,7 +253,22 @@ func (s *KVBackedStore) GetClusterData(ctx context.Context) (*cluster.ClusterDat
 		if err != ErrKeyNotFound {
 			return nil, nil, err
 		}
-		return nil, nil, nil
+		if !wait {
+			return nil, nil, nil
+		}
+
+		// Wait for cluster data
+		wctx, cancelWatch := context.WithCancel(ctx)
+		defer cancelWatch()
+		watchCh, err := s.store.Watch(wctx, path)
+		if err != nil {
+			return nil, nil, err
+		}
+		var ok bool
+		pair, ok = <-watchCh
+		if !ok {
+			return nil, nil, nil
+		}
 	}
 	if err := json.Unmarshal(pair.Value, &cd); err != nil {
 		return nil, nil, err

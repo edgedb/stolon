@@ -188,7 +188,7 @@ func (c *ClusterChecker) SetProxyInfo(e store.Store, generation int64, proxyTime
 
 // Check reads the cluster data and applies the right pollon configuration.
 func (c *ClusterChecker) Check() error {
-	cd, _, err := c.e.GetClusterData(context.TODO())
+	cd, _, err := c.e.GetClusterData(context.TODO(), false)
 	if err != nil {
 		return fmt.Errorf("cannot get cluster data: %v", err)
 	}

@@ -33,7 +33,7 @@ type Cluster struct {
 
 // NewCluster returns an new instance of Cluster
 func NewCluster(name string, rCfg Config, store store.Store) (*Cluster, error) {
-	cd, _, err := store.GetClusterData(context.TODO())
+	cd, _, err := store.GetClusterData(context.TODO(), false)
 
 	if err != nil {
 		return nil, err

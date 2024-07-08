@@ -813,7 +813,8 @@ func (p *PostgresKeeper) Start(ctx context.Context) {
 
 	var err error
 	var cd *cluster.ClusterData
-	cd, _, err = p.e.GetClusterData(context.TODO())
+	log.Info("waiting for cluster data to appear")
+	cd, _, err = p.e.GetClusterData(ctx, true)
 	if err != nil {
 		log.Errorw("error retrieving cluster data", zap.Error(err))
 	} else if cd != nil {
@@ -1043,7 +1044,7 @@ func (p *PostgresKeeper) postgresKeeperSM(pctx context.Context) {
 	e := p.e
 	pgm := p.pgm
 
-	cd, _, err := e.GetClusterData(pctx)
+	cd, _, err := e.GetClusterData(pctx, false)
 	if err != nil {
 		log.Errorw("error retrieving cluster data", zap.Error(err))
 		return

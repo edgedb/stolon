@@ -53,7 +53,7 @@ func (mr *MockStoreMockRecorder) AtomicPutClusterData(ctx, cd, previous interfac
 }
 
 // GetClusterData mocks base method.
-func (m *MockStore) GetClusterData(ctx context.Context) (*cluster.ClusterData, *store.KVPair, error) {
+func (m *MockStore) GetClusterData(ctx context.Context, wait bool) (*cluster.ClusterData, *store.KVPair, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetClusterData", ctx)
 	ret0, _ := ret[0].(*cluster.ClusterData)

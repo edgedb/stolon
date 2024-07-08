@@ -80,7 +80,7 @@ func initCluster(cmd *cobra.Command, args []string) {
 		die("%v", err)
 	}
 
-	cd, _, err := e.GetClusterData(context.TODO())
+	cd, _, err := e.GetClusterData(context.TODO(), false)
 	if err != nil {
 		die("cannot get cluster data: %v", err)
 	}
@@ -101,7 +101,7 @@ func initCluster(cmd *cobra.Command, args []string) {
 		os.Exit(0)
 	}
 
-	_, _, err = e.GetClusterData(context.TODO())
+	_, _, err = e.GetClusterData(context.TODO(), false)
 	if err != nil {
 		die("cannot get cluster data: %v", err)
 	}

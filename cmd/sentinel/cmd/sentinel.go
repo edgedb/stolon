@@ -1858,7 +1858,7 @@ func (s *Sentinel) clusterSentinelCheck(pctx context.Context) bool {
 	defer s.updateMutex.Unlock()
 	e := s.e
 
-	cd, prevCDPair, err := e.GetClusterData(pctx)
+	cd, prevCDPair, err := e.GetClusterData(pctx, false)
 	if err != nil {
 		log.Errorw("error retrieving cluster data", zap.Error(err))
 		goto nextIteration

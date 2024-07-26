@@ -272,14 +272,59 @@ func (s *KVBackedStore) SetKeeperInfo(ctx context.Context, id string, ms *cluste
 	return s.store.Put(ctx, filepath.Join(s.clusterPath, keepersInfoDir, id), msj, &WriteOptions{TTL: ttl})
 }
 
-func (s *KVBackedStore) GetKeepersInfo(ctx context.Context) (cluster.KeepersInfo, error) {
+func (s *KVBackedStore) GetKeepersInfo(ctx context.Context, wait bool) (cluster.KeepersInfo, error) {
 	keepers := cluster.KeepersInfo{}
-	pairs, err := s.store.List(ctx, filepath.Join(s.clusterPath, keepersInfoDir))
+	keepersDir := filepath.Join(s.clusterPath, keepersInfoDir)
+	pairs, err := s.store.List(ctx, keepersDir)
 	if err != nil {
 		if err != ErrKeyNotFound {
 			return nil, err
 		}
-		return keepers, nil
+		if !wait {
+			return keepers, nil
+		}
+
+		// Watch the whole clusterPath until keepersInfoDir exists
+		wctx, cancelWatch := context.WithCancel(ctx)
+		defer cancelWatch()
+		clusterTreeCh, err := s.store.WatchTree(wctx, s.clusterPath)
+		if err != nil {
+			return nil, err
+		}
+	watching:
+		for {
+			clusterPairs, ok := <-clusterTreeCh
+			if !ok {
+				return keepers, nil
+			}
+			for _, pair := range clusterPairs {
+				if strings.HasPrefix(pair.Key, keepersDir) {
+					cancelWatch()
+					pairs = make([]*KVPair, 0)
+					break watching
+				}
+			}
+		}
+	}
+	if len(pairs) == 0 && wait {
+		// Watch the keepersInfoDir until we have at least one keeper
+		wctx, cancelWatch := context.WithCancel(ctx)
+		defer cancelWatch()
+		keepersCh, err := s.store.WatchTree(wctx, keepersDir)
+		if err != nil {
+			return nil, err
+		}
+		for {
+			var ok bool
+			pairs, ok = <-keepersCh
+			if !ok {
+				return keepers, nil
+			}
+			if len(pairs) != 0 {
+				cancelWatch()
+				break
+			}
+		}
 	}
 	for _, pair := range pairs {
 		var ki cluster.KeeperInfo

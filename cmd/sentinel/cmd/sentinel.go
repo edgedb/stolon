@@ -1881,7 +1881,7 @@ func (s *Sentinel) clusterSentinelCheck(pctx context.Context) {
 		return
 	}
 
-	keepersInfo, err := s.e.GetKeepersInfo(pctx)
+	keepersInfo, err := s.e.GetKeepersInfo(pctx, false)
 	if err != nil {
 		log.Errorw("cannot get keepers info", zap.Error(err))
 		return

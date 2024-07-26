@@ -69,18 +69,18 @@ func (mr *MockStoreMockRecorder) GetClusterData(ctx interface{}) *gomock.Call {
 }
 
 // GetKeepersInfo mocks base method.
-func (m *MockStore) GetKeepersInfo(ctx context.Context) (cluster.KeepersInfo, error) {
+func (m *MockStore) GetKeepersInfo(ctx context.Context, wait bool) (cluster.KeepersInfo, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetKeepersInfo", ctx)
+	ret := m.ctrl.Call(m, "GetKeepersInfo", ctx, wait)
 	ret0, _ := ret[0].(cluster.KeepersInfo)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GetKeepersInfo indicates an expected call of GetKeepersInfo.
-func (mr *MockStoreMockRecorder) GetKeepersInfo(ctx interface{}) *gomock.Call {
+func (mr *MockStoreMockRecorder) GetKeepersInfo(ctx, wait interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetKeepersInfo", reflect.TypeOf((*MockStore)(nil).GetKeepersInfo), ctx)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetKeepersInfo", reflect.TypeOf((*MockStore)(nil).GetKeepersInfo), ctx, wait)
 }
 
 // GetProxiesInfo mocks base method.

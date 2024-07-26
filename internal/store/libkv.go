@@ -71,21 +71,19 @@ func (s *libKVStore) List(ctx context.Context, directory string) ([]*KVPair, err
 	return kvPairs, nil
 }
 
-func (s *libKVStore) Watch(ctx context.Context, key string, stopCh <-chan struct{}) (<-chan *KVPair, error) {
-	innerStopCh := make(chan struct{})
-	watchCh, err := s.store.Watch(key, innerStopCh)
+func (s *libKVStore) Watch(ctx context.Context, key string) (<-chan *KVPair, error) {
+	stopCh := make(chan struct{})
+	watchCh, err := s.store.Watch(key, stopCh)
 	if err != nil {
 		return nil, fromLibKVStoreErr(err)
 	}
 	outCh := make(chan *KVPair)
 	go func() {
 		defer close(outCh)
-		defer close(innerStopCh)
+		defer close(stopCh)
 		for {
 			select {
 			case <-ctx.Done():
-				return
-			case <-stopCh:
 				return
 			case pair, ok := <-watchCh:
 				if !ok {
@@ -98,21 +96,19 @@ func (s *libKVStore) Watch(ctx context.Context, key string, stopCh <-chan struct
 	return outCh, nil
 }
 
-func (s *libKVStore) WatchTree(ctx context.Context, directory string, stopCh <-chan struct{}) (<-chan []*KVPair, error) {
-	innerStopCh := make(chan struct{})
-	watchCh, err := s.store.WatchTree(directory, innerStopCh)
+func (s *libKVStore) WatchTree(ctx context.Context, directory string) (<-chan []*KVPair, error) {
+	stopCh := make(chan struct{})
+	watchCh, err := s.store.WatchTree(directory, stopCh)
 	if err != nil {
 		return nil, fromLibKVStoreErr(err)
 	}
 	outCh := make(chan []*KVPair)
 	go func() {
 		defer close(outCh)
-		defer close(innerStopCh)
+		defer close(stopCh)
 		for {
 			select {
 			case <-ctx.Done():
-				return
-			case <-stopCh:
 				return
 			case pairs, ok := <-watchCh:
 				if !ok {

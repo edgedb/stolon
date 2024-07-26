@@ -95,10 +95,10 @@ type KVStore interface {
 	List(ctx context.Context, directory string) ([]*KVPair, error)
 
 	// Watch a key for its values
-	Watch(ctx context.Context, key string, stopCh <-chan struct{}) (<-chan *KVPair, error)
+	Watch(ctx context.Context, key string) (<-chan *KVPair, error)
 
 	// WatchTree watches for changes on a "directory"
-	WatchTree(ctx context.Context, directory string, stopCh <-chan struct{}) (<-chan []*KVPair, error)
+	WatchTree(ctx context.Context, directory string) (<-chan []*KVPair, error)
 
 	// Atomic CAS operation on a single value.
 	// Pass previous = nil to create a new key.

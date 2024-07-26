@@ -86,11 +86,11 @@ func (s *etcdV3Store) List(pctx context.Context, directory string) ([]*KVPair, e
 	return kvPairs, nil
 }
 
-func (s *etcdV3Store) Watch(ctx context.Context, key string, stopCh <-chan struct{}) (<-chan *KVPair, error) {
+func (s *etcdV3Store) Watch(ctx context.Context, key string) (<-chan *KVPair, error) {
 	return nil, errors.New("not implemented")
 }
 
-func (s *etcdV3Store) WatchTree(ctx context.Context, directory string, stopCh <-chan struct{}) (<-chan []*KVPair, error) {
+func (s *etcdV3Store) WatchTree(ctx context.Context, directory string) (<-chan []*KVPair, error) {
 	return nil, errors.New("not implemented")
 }
 

@@ -495,33 +495,30 @@ func (p *Manager) WaitReady(timeout time.Duration) error {
 }
 
 func (p *Manager) WaitRecoveryDone(timeout time.Duration) error {
-	maj, _, err := p.BinaryVersion()
-	if err != nil {
-		return fmt.Errorf("error fetching pg version: %v", err)
-	}
-
 	start := time.Now()
-	if maj >= 12 {
-		for timeout == 0 || time.Since(start) < timeout {
-			_, err := os.Stat(filepath.Join(p.dataDir, postgresRecoverySignal))
-			if err != nil && !os.IsNotExist(err) {
-				return err
-			}
+
+	for timeout == 0 || time.Since(start) < timeout {
+		pidData, err := os.ReadFile(filepath.Join(p.dataDir, "postmaster.pid"))
+		if err != nil {
 			if os.IsNotExist(err) {
-				return nil
-			}
-			time.Sleep(1 * time.Second)
-		}
-	} else {
-		for timeout == 0 || time.Since(start) < timeout {
-			_, err := os.Stat(filepath.Join(p.dataDir, postgresRecoveryDone))
-			if err != nil && !os.IsNotExist(err) {
+				time.Sleep(1 * time.Second)
+				continue
+			} else {
 				return err
 			}
-			if !os.IsNotExist(err) {
-				return nil
-			}
+		}
+
+		lines := strings.Split(string(pidData), "\n")
+		if len(lines) < 8 {
+			return fmt.Errorf("malformed postmaster.pid, expected 8 lines, got: %d", len(lines))
+		}
+
+		status := strings.TrimSpace(lines[7])
+		if status == "ready" {
+			return nil
+		} else {
 			time.Sleep(1 * time.Second)
+			continue
 		}
 	}
 

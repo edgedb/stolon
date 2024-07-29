@@ -71,6 +71,56 @@ func (s *libKVStore) List(ctx context.Context, directory string) ([]*KVPair, err
 	return kvPairs, nil
 }
 
+func (s *libKVStore) Watch(ctx context.Context, key string) (<-chan *KVPair, error) {
+	watchCh, err := s.store.Watch(key, ctx.Done())
+	if err != nil {
+		return nil, fromLibKVStoreErr(err)
+	}
+	outCh := make(chan *KVPair)
+	go func() {
+		defer close(outCh)
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case pair, ok := <-watchCh:
+				if !ok {
+					return
+				}
+				outCh <- &KVPair{Key: pair.Key, Value: pair.Value, LastIndex: pair.LastIndex}
+			}
+		}
+	}()
+	return outCh, nil
+}
+
+func (s *libKVStore) WatchTree(ctx context.Context, directory string) (<-chan []*KVPair, error) {
+	watchCh, err := s.store.WatchTree(directory, ctx.Done())
+	if err != nil {
+		return nil, fromLibKVStoreErr(err)
+	}
+	outCh := make(chan []*KVPair)
+	go func() {
+		defer close(outCh)
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case pairs, ok := <-watchCh:
+				if !ok {
+					return
+				}
+				var rv []*KVPair
+				for _, pair := range pairs {
+					rv = append(rv, &KVPair{Key: pair.Key, Value: pair.Value, LastIndex: pair.LastIndex})
+				}
+				outCh <- rv
+			}
+		}
+	}()
+	return outCh, nil
+}
+
 func (s *libKVStore) AtomicPut(ctx context.Context, key string, value []byte, previous *KVPair, options *WriteOptions) (*KVPair, error) {
 	var libkvPrevious *libkvstore.KVPair
 	if previous != nil {

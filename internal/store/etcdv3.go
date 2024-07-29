@@ -16,6 +16,7 @@ package store
 
 import (
 	"context"
+	"errors"
 	"time"
 
 	etcdclientv3 "go.etcd.io/etcd/clientv3"
@@ -83,6 +84,14 @@ func (s *etcdV3Store) List(pctx context.Context, directory string) ([]*KVPair, e
 		kvPairs[i] = &KVPair{Key: string(kv.Key), Value: kv.Value, LastIndex: uint64(kv.ModRevision)}
 	}
 	return kvPairs, nil
+}
+
+func (s *etcdV3Store) Watch(ctx context.Context, key string) (<-chan *KVPair, error) {
+	return nil, errors.New("not implemented")
+}
+
+func (s *etcdV3Store) WatchTree(ctx context.Context, directory string) (<-chan []*KVPair, error) {
+	return nil, errors.New("not implemented")
 }
 
 func (s *etcdV3Store) AtomicPut(pctx context.Context, key string, value []byte, previous *KVPair, options *WriteOptions) (*KVPair, error) {

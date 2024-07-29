@@ -72,15 +72,13 @@ func (s *libKVStore) List(ctx context.Context, directory string) ([]*KVPair, err
 }
 
 func (s *libKVStore) Watch(ctx context.Context, key string) (<-chan *KVPair, error) {
-	stopCh := make(chan struct{})
-	watchCh, err := s.store.Watch(key, stopCh)
+	watchCh, err := s.store.Watch(key, ctx.Done())
 	if err != nil {
 		return nil, fromLibKVStoreErr(err)
 	}
 	outCh := make(chan *KVPair)
 	go func() {
 		defer close(outCh)
-		defer close(stopCh)
 		for {
 			select {
 			case <-ctx.Done():
@@ -97,15 +95,13 @@ func (s *libKVStore) Watch(ctx context.Context, key string) (<-chan *KVPair, err
 }
 
 func (s *libKVStore) WatchTree(ctx context.Context, directory string) (<-chan []*KVPair, error) {
-	stopCh := make(chan struct{})
-	watchCh, err := s.store.WatchTree(directory, stopCh)
+	watchCh, err := s.store.WatchTree(directory, ctx.Done())
 	if err != nil {
 		return nil, fromLibKVStoreErr(err)
 	}
 	outCh := make(chan []*KVPair)
 	go func() {
 		defer close(outCh)
-		defer close(stopCh)
 		for {
 			select {
 			case <-ctx.Done():

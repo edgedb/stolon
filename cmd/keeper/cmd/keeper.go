@@ -1287,8 +1287,7 @@ func (p *PostgresKeeper) postgresKeeperSM(pctx context.Context) {
 					return
 				}
 				log.Infof("recovery completed")
-			}
-			if err = pgm.WaitReady(cd.Cluster.DefSpec().SyncTimeout.Duration); err != nil {
+			} else if err = pgm.WaitReady(cd.Cluster.DefSpec().SyncTimeout.Duration); err != nil {
 				log.Errorw("timeout waiting for instance to be ready", zap.Error(err))
 				return
 			}

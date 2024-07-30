@@ -61,6 +61,30 @@ func ping(ctx context.Context, connParams ConnParams) error {
 	return nil
 }
 
+func isInRecovery(ctx context.Context, connParams ConnParams) (bool, error) {
+	db, err := sql.Open("postgres", connParams.ConnString())
+	if err != nil {
+		return false, err
+	}
+	defer db.Close()
+
+	rows, err := query(ctx, db, "select pg_is_in_recovery()")
+	if err != nil {
+		return false, err
+	}
+	if rows.Next() {
+		var isInRecovery bool
+		if err := rows.Scan(&isInRecovery); err != nil {
+			return false, err
+		}
+		if isInRecovery {
+			return true, nil
+		}
+		return false, nil
+	}
+	return false, fmt.Errorf("no rows returned")
+}
+
 func setPassword(ctx context.Context, connParams ConnParams, username, password string) error {
 	db, err := sql.Open("postgres", connParams.ConnString())
 	if err != nil {

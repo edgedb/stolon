@@ -522,6 +522,34 @@ func (p *Manager) WaitRecoveryDone(timeout time.Duration) error {
 		}
 	}
 
+	// Now that the server is "ready", wait until it actually fully exits
+	// recovery, because if we stop it while pg_is_in_recovery() is still
+	// true, Postgres will complain on the next startup that "database
+	// system was shut down in recovery".
+	for {
+		var timeSinceStart time.Duration
+		if timeout == 0 {
+			timeSinceStart = 0
+		} else {
+			timeSinceStart = time.Since(start)
+			if timeSinceStart >= timeout {
+				break
+			}
+		}
+
+		inRecovery, err := p.IsInRecovery(timeout - timeSinceStart)
+		if err != nil {
+			return fmt.Errorf("error while waiting for db recovery: %w", err)
+		}
+
+		if !inRecovery {
+			return nil
+		} else {
+			time.Sleep(1 * time.Second)
+			continue
+		}
+	}
+
 	return fmt.Errorf("timeout waiting for db recovery")
 }
 
@@ -1038,6 +1066,12 @@ func (p *Manager) Ping() error {
 	ctx, cancel := context.WithTimeout(context.Background(), p.requestTimeout)
 	defer cancel()
 	return ping(ctx, p.localConnParams)
+}
+
+func (p *Manager) IsInRecovery(timeout time.Duration) (bool, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+	return isInRecovery(ctx, p.localConnParams)
 }
 
 func (p *Manager) OlderWalFile() (string, error) {

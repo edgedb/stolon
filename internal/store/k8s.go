@@ -17,6 +17,7 @@ package store
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"time"
 
@@ -252,7 +253,10 @@ func (s *KubeStore) SetKeeperInfo(ctx context.Context, id string, ms *cluster.Ke
 	return s.patchKubeStatusAnnotation(msj)
 }
 
-func (s *KubeStore) GetKeepersInfo(ctx context.Context) (cluster.KeepersInfo, error) {
+func (s *KubeStore) GetKeepersInfo(ctx context.Context, wait bool) (cluster.KeepersInfo, error) {
+	if wait {
+		return nil, errors.New("not implemented")
+	}
 	keepers := cluster.KeepersInfo{}
 
 	podsClient := s.client.CoreV1().Pods(s.namespace)

@@ -1026,6 +1026,7 @@ func NewTestConsul(t *testing.T, dir string, a ...string) (*TestStore, error) {
 	if _, err := f.WriteString(fmt.Sprintf(`{
 		"ports": {
 			"dns": -1,
+			"grpc_tls": -1,
 			"http": %s,
 			"serf_lan": %s,
 			"serf_wan": %s,

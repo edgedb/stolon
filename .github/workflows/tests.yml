@@ -81,6 +81,7 @@ jobs:
           STCTL_BIN: ${{ github.workspace }}/bin/stolonctl
           CONSUL_BIN: /usr/bin/consul
           INTEGRATION: 1
+          DEBUG: 1
         run: |
           mkdir -p $TMPDIR
           chmod +x ./bin/*

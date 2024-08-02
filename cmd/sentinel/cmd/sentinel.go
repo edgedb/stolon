@@ -1990,6 +1990,8 @@ func sentinel(c *cobra.Command, args []string) {
 		pg.SetLogger(log)
 	}
 
+	log.Infof("starting stolon-sentinel version %s", cmd.Version)
+
 	if err := cmd.CheckCommonConfig(&cfg.CommonConfig); err != nil {
 		log.Fatalf(err.Error())
 	}

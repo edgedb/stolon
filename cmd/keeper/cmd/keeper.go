@@ -1965,6 +1965,8 @@ func keeper(c *cobra.Command, args []string) {
 		pg.SetLogger(log)
 	}
 
+	log.Infof("starting stolon-keeper version %s", cmd.Version)
+
 	if cfg.dataDir == "" {
 		log.Fatalf("data dir required")
 	}

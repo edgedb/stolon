@@ -515,7 +515,7 @@ func (p *Manager) WaitRecoveryDone(timeout time.Duration) error {
 
 		status := strings.TrimSpace(lines[7])
 		if status == "ready" {
-			return nil
+			break
 		} else {
 			time.Sleep(1 * time.Second)
 			continue
@@ -527,17 +527,16 @@ func (p *Manager) WaitRecoveryDone(timeout time.Duration) error {
 	// true, Postgres will complain on the next startup that "database
 	// system was shut down in recovery".
 	for {
-		var timeSinceStart time.Duration
-		if timeout == 0 {
-			timeSinceStart = 0
-		} else {
-			timeSinceStart = time.Since(start)
-			if timeSinceStart >= timeout {
+		var checkTimeout *time.Duration
+		if timeout != 0 {
+			remainingBudget := timeout - time.Since(start)
+			if remainingBudget <= 0 {
 				break
 			}
+			checkTimeout = &remainingBudget
 		}
 
-		inRecovery, err := p.IsInRecovery(timeout - timeSinceStart)
+		inRecovery, err := p.IsInRecovery(checkTimeout)
 		if err != nil {
 			return fmt.Errorf("error while waiting for db recovery: %w", err)
 		}
@@ -1068,9 +1067,13 @@ func (p *Manager) Ping() error {
 	return ping(ctx, p.localConnParams)
 }
 
-func (p *Manager) IsInRecovery(timeout time.Duration) (bool, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
-	defer cancel()
+func (p *Manager) IsInRecovery(timeout *time.Duration) (bool, error) {
+	ctx := context.Background()
+	if timeout != nil {
+		deadlineCtx, cancel := context.WithTimeout(ctx, *timeout)
+		defer cancel()
+		ctx = deadlineCtx
+	}
 	return isInRecovery(ctx, p.localConnParams)
 }
 

@@ -1070,7 +1070,7 @@ func (p *Manager) Ping() error {
 func (p *Manager) IsInRecovery(timeout *time.Duration) (bool, error) {
 	ctx := context.Background()
 	if timeout != nil {
-		deadlineCtx, cancel := context.WithTimeout(context.Background(), *timeout)
+		deadlineCtx, cancel := context.WithTimeout(ctx, *timeout)
 		defer cancel()
 		ctx = deadlineCtx
 	}

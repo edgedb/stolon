@@ -1818,7 +1818,13 @@ func (s *Sentinel) Start(ctx context.Context) {
 			return
 		case <-timerCh:
 			go func() {
-				for !s.clusterSentinelCheck(ctx) {
+				// Repeat clusterSentinelCheck() in a tight loop for at most 5 times
+				// until it returns `true` to sleep for s.sleepInterval
+				shouldSleep := false
+				retries := 0
+				for !shouldSleep && retries < 5 {
+					shouldSleep = s.clusterSentinelCheck(ctx)
+					retries++
 				}
 				endCh <- struct{}{}
 			}()
@@ -1835,6 +1841,19 @@ func (s *Sentinel) leaderInfo() (bool, uint) {
 }
 
 func (s *Sentinel) clusterSentinelCheck(pctx context.Context) bool {
+	var keepersInfo cluster.KeepersInfo
+	var proxiesInfo cluster.ProxiesInfo
+	var isLeader bool
+	var leadershipCount uint
+	var firstRun bool
+	var newcd *cluster.ClusterData
+	var newKeeperInfoHistories KeeperInfoHistories
+	var activeProxiesInfos cluster.ProxiesInfo
+
+	// This function returns a boolean `shouldSleep`, indicating whether we should sleep s.sleepInterval before the
+	// next iteration, or retries immediately without sleeping. Note, `shouldSleep = false` may also lead to sleeping.
+	shouldSleep := true
+
 	s.updateMutex.Lock()
 	defer s.updateMutex.Unlock()
 	e := s.e
@@ -1842,16 +1861,16 @@ func (s *Sentinel) clusterSentinelCheck(pctx context.Context) bool {
 	cd, prevCDPair, err := e.GetClusterData(pctx)
 	if err != nil {
 		log.Errorw("error retrieving cluster data", zap.Error(err))
-		return true
+		goto nextIteration
 	}
 	if cd != nil {
 		if cd.FormatVersion != cluster.CurrentCDFormatVersion {
 			log.Errorw("unsupported clusterdata format version", "version", cd.FormatVersion)
-			return true
+			goto nextIteration
 		}
 		if err = cd.Cluster.Spec.Validate(); err != nil {
 			log.Errorw("clusterdata validation failed", zap.Error(err))
-			return true
+			goto nextIteration
 		}
 		if cd.Cluster != nil {
 			s.sleepInterval = cd.Cluster.DefSpec().SleepInterval.Duration
@@ -1865,45 +1884,46 @@ func (s *Sentinel) clusterSentinelCheck(pctx context.Context) bool {
 		// Cluster first initialization
 		if s.initialClusterSpec == nil {
 			log.Infow("no cluster data available, waiting for it to appear")
-			return true
+			goto nextIteration
 		}
 		c := cluster.NewCluster(s.UIDFn(), s.initialClusterSpec)
 		log.Infow("writing initial cluster data")
-		newcd := cluster.NewClusterData(c)
+		newcd = cluster.NewClusterData(c)
 		log.Debugf("newcd dump: %s", spew.Sdump(newcd))
 		if _, err = e.AtomicPutClusterData(pctx, newcd, nil); err != nil {
 			log.Errorw("error saving cluster data", zap.Error(err))
-			return true
+		} else {
+			// Skip the wait if cluster data is initialized successfully
+			shouldSleep = false
 		}
-		// Skip the wait if cluster data is initialized successfully
-		return false
+		goto nextIteration
 	}
 
 	if err = s.setSentinelInfo(pctx, 2*s.sleepInterval); err != nil {
 		log.Errorw("cannot update sentinel info", zap.Error(err))
-		return true
+		goto nextIteration
 	}
 
-	keepersInfo, err := s.e.GetKeepersInfo(pctx, false)
+	keepersInfo, err = s.e.GetKeepersInfo(pctx, false)
 	if err != nil {
 		log.Errorw("cannot get keepers info", zap.Error(err))
-		return true
+		goto nextIteration
 	}
 	log.Debugf("keepersInfo dump: %s", spew.Sdump(keepersInfo))
 
-	proxiesInfo, err := s.e.GetProxiesInfo(pctx)
+	proxiesInfo, err = s.e.GetProxiesInfo(pctx)
 	if err != nil {
 		log.Errorw("failed to get proxies info", zap.Error(err))
-		return true
+		goto nextIteration
 	}
 
-	isLeader, leadershipCount := s.leaderInfo()
+	isLeader, leadershipCount = s.leaderInfo()
 	if !isLeader {
-		return true
+		goto nextIteration
 	}
 
 	// detect if this is the first check after (re)gaining leadership
-	firstRun := false
+	firstRun = false
 	if s.lastLeadershipCount != leadershipCount {
 		firstRun = true
 		s.lastLeadershipCount = leadershipCount
@@ -1923,15 +1943,15 @@ func (s *Sentinel) clusterSentinelCheck(pctx context.Context) bool {
 		s.updateDBConvergenceInfos(cd)
 	}
 
-	newcd, newKeeperInfoHistories := s.updateKeepersStatus(cd, keepersInfo, firstRun)
+	newcd, newKeeperInfoHistories = s.updateKeepersStatus(cd, keepersInfo, firstRun)
 	log.Debugf("newcd dump after updateKeepersStatus: %s", spew.Sdump(newcd))
 
-	activeProxiesInfos := s.activeProxiesInfos(proxiesInfo)
+	activeProxiesInfos = s.activeProxiesInfos(proxiesInfo)
 
 	newcd, err = s.updateCluster(newcd, activeProxiesInfos)
 	if err != nil {
 		log.Errorw("failed to update cluster data", zap.Error(err))
-		return true
+		goto nextIteration
 	}
 	log.Debugf("newcd dump after updateCluster: %s", spew.Sdump(newcd))
 
@@ -1954,7 +1974,9 @@ func (s *Sentinel) clusterSentinelCheck(pctx context.Context) bool {
 	// successfully. That enables us to alert on when Sentinels are failing to
 	// correctly sync.
 	lastCheckSuccessSeconds.SetToCurrentTime()
-	return true
+
+nextIteration:
+	return shouldSleep
 }
 
 func sigHandler(sigs chan os.Signal, cancel context.CancelFunc) {

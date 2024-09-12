@@ -538,7 +538,7 @@ func TestAdditionalReplicationSlots(t *testing.T) {
 		t.Fatalf("unexpected err: %v", err)
 	}
 
-	cd, _, err := sm.GetClusterData(context.TODO())
+	cd, _, err := sm.GetClusterData(context.TODO(), false)
 	if err != nil {
 		t.Fatalf("unexpected err: %v", err)
 	}
@@ -835,7 +835,7 @@ func TestAdvertise(t *testing.T) {
 	}
 
 	// Check advertised listen address and port
-	cd, _, err := sm.GetClusterData(context.TODO())
+	cd, _, err := sm.GetClusterData(context.TODO(), false)
 	if err != nil {
 		t.Fatalf("unexpected err: %v", err)
 	}

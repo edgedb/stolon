@@ -53,9 +53,9 @@ func (mr *MockStoreMockRecorder) AtomicPutClusterData(ctx, cd, previous interfac
 }
 
 // GetClusterData mocks base method.
-func (m *MockStore) GetClusterData(ctx context.Context) (*cluster.ClusterData, *store.KVPair, error) {
+func (m *MockStore) GetClusterData(ctx context.Context, wait bool) (*cluster.ClusterData, *store.KVPair, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetClusterData", ctx)
+	ret := m.ctrl.Call(m, "GetClusterData", ctx, wait)
 	ret0, _ := ret[0].(*cluster.ClusterData)
 	ret1, _ := ret[1].(*store.KVPair)
 	ret2, _ := ret[2].(error)
@@ -63,9 +63,9 @@ func (m *MockStore) GetClusterData(ctx context.Context) (*cluster.ClusterData, *
 }
 
 // GetClusterData indicates an expected call of GetClusterData.
-func (mr *MockStoreMockRecorder) GetClusterData(ctx interface{}) *gomock.Call {
+func (mr *MockStoreMockRecorder) GetClusterData(ctx, wait interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetClusterData", reflect.TypeOf((*MockStore)(nil).GetClusterData), ctx)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetClusterData", reflect.TypeOf((*MockStore)(nil).GetClusterData), ctx, wait)
 }
 
 // GetKeepersInfo mocks base method.

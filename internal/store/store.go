@@ -34,7 +34,7 @@ var (
 type Store interface {
 	AtomicPutClusterData(ctx context.Context, cd *cluster.ClusterData, previous *KVPair) (*KVPair, error)
 	PutClusterData(ctx context.Context, cd *cluster.ClusterData) error
-	GetClusterData(ctx context.Context) (*cluster.ClusterData, *KVPair, error)
+	GetClusterData(ctx context.Context, wait bool) (*cluster.ClusterData, *KVPair, error)
 	SetKeeperInfo(ctx context.Context, id string, ms *cluster.KeeperInfo, ttl time.Duration) error
 	GetKeepersInfo(ctx context.Context, wait bool) (cluster.KeepersInfo, error)
 	SetSentinelInfo(ctx context.Context, si *cluster.SentinelInfo, ttl time.Duration) error

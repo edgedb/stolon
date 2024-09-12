@@ -89,7 +89,7 @@ func TestCheckAndRegisterMasterAndSlaves(t *testing.T) {
 			Cluster: &cluster.Cluster{},
 			DBs:     cluster.DBs{},
 		}
-		mockStore.EXPECT().GetClusterData(gomock.Any()).Return(&clusterData, &store.KVPair{}, nil)
+		mockStore.EXPECT().GetClusterData(gomock.Any(), false).Return(&clusterData, &store.KVPair{}, nil)
 		mockServiceDiscovery.EXPECT().DeRegister(&anotherServiceInfo)
 		mockServiceDiscovery.EXPECT().DeRegister(&serviceInfo)
 
@@ -122,7 +122,7 @@ func TestCheckAndRegisterMasterAndSlaves(t *testing.T) {
 				},
 			},
 		}
-		mockStore.EXPECT().GetClusterData(gomock.Any()).Return(&clusterData, &store.KVPair{}, nil)
+		mockStore.EXPECT().GetClusterData(gomock.Any(), false).Return(&clusterData, &store.KVPair{}, nil)
 		mockServiceDiscovery.EXPECT().Register(&serviceInfo)
 		mockServiceDiscovery.EXPECT().Register(&anotherServiceInfo)
 
@@ -156,7 +156,7 @@ func TestCheckAndRegisterMasterAndSlaves(t *testing.T) {
 				},
 			},
 		}
-		mockStore.EXPECT().GetClusterData(gomock.Any()).Return(&clusterData, &store.KVPair{}, nil)
+		mockStore.EXPECT().GetClusterData(gomock.Any(), false).Return(&clusterData, &store.KVPair{}, nil)
 		mockServiceDiscovery.EXPECT().DeRegister(&yetAnotherServiceInfo)
 
 		checkAndRegisterMasterAndSlaves(clusterName, mockStore, mockServiceDiscovery, false)
@@ -189,7 +189,7 @@ func TestCheckAndRegisterMasterAndSlaves(t *testing.T) {
 					},
 				},
 			}
-			mockStore.EXPECT().GetClusterData(gomock.Any()).Return(&clusterData, &store.KVPair{}, nil)
+			mockStore.EXPECT().GetClusterData(gomock.Any(), false).Return(&clusterData, &store.KVPair{}, nil)
 			mockServiceDiscovery.EXPECT().DeRegister(&masterServiceInfo)
 
 			checkAndRegisterMasterAndSlaves(clusterName, mockStore, mockServiceDiscovery, false)
@@ -216,7 +216,7 @@ func TestCheckAndRegisterMasterAndSlaves(t *testing.T) {
 					},
 				},
 			}
-			mockStore.EXPECT().GetClusterData(gomock.Any()).Return(&clusterData, &store.KVPair{}, nil)
+			mockStore.EXPECT().GetClusterData(gomock.Any(), false).Return(&clusterData, &store.KVPair{}, nil)
 			mockServiceDiscovery.EXPECT().DeRegister(&masterService)
 
 			checkAndRegisterMasterAndSlaves(clusterName, mockStore, mockServiceDiscovery, false)
@@ -242,7 +242,7 @@ func TestCheckAndRegisterMasterAndSlaves(t *testing.T) {
 					},
 				},
 			}
-			mockStore.EXPECT().GetClusterData(gomock.Any()).Return(&clusterData, &store.KVPair{}, nil)
+			mockStore.EXPECT().GetClusterData(gomock.Any(), false).Return(&clusterData, &store.KVPair{}, nil)
 
 			checkAndRegisterMasterAndSlaves(clusterName, mockStore, mockServiceDiscovery, false)
 		})
@@ -275,7 +275,7 @@ func TestCheckAndRegisterMasterAndSlaves(t *testing.T) {
 					},
 				},
 			}
-			mockStore.EXPECT().GetClusterData(gomock.Any()).Return(&clusterData, &store.KVPair{}, nil)
+			mockStore.EXPECT().GetClusterData(gomock.Any(), false).Return(&clusterData, &store.KVPair{}, nil)
 			mockServiceDiscovery.EXPECT().Register(&masterServiceInfo)
 
 			checkAndRegisterMasterAndSlaves(clusterName, mockStore, mockServiceDiscovery, true)
@@ -297,7 +297,7 @@ func TestCheckAndRegisterMasterAndSlaves(t *testing.T) {
 				Cluster: &cluster.Cluster{},
 				DBs:     cluster.DBs{},
 			}
-			mockStore.EXPECT().GetClusterData(gomock.Any()).Return(&clusterData, &store.KVPair{}, nil)
+			mockStore.EXPECT().GetClusterData(gomock.Any(), false).Return(&clusterData, &store.KVPair{}, nil)
 			mockServiceDiscovery.EXPECT().DeRegister(&masterService)
 
 			checkAndRegisterMasterAndSlaves(clusterName, mockStore, mockServiceDiscovery, true)
@@ -324,7 +324,7 @@ func TestCheckAndRegisterMasterAndSlaves(t *testing.T) {
 					},
 				},
 			}
-			mockStore.EXPECT().GetClusterData(gomock.Any()).Return(&clusterData, &store.KVPair{}, nil)
+			mockStore.EXPECT().GetClusterData(gomock.Any(), false).Return(&clusterData, &store.KVPair{}, nil)
 			mockServiceDiscovery.EXPECT().Register(&masterService)
 
 			checkAndRegisterMasterAndSlaves(clusterName, mockStore, mockServiceDiscovery, true)

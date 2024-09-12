@@ -222,7 +222,7 @@ func (s *KubeStore) PutClusterData(ctx context.Context, cd *cluster.ClusterData)
 	return nil
 }
 
-func (s *KubeStore) GetClusterData(ctx context.Context) (*cluster.ClusterData, *KVPair, error) {
+func (s *KubeStore) GetClusterData(ctx context.Context, wait bool) (*cluster.ClusterData, *KVPair, error) {
 	epsClient := s.client.CoreV1().ConfigMaps(s.namespace)
 	result, err := epsClient.Get(s.resourceName, metav1.GetOptions{})
 	if err != nil {

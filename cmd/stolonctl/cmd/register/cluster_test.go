@@ -29,7 +29,7 @@ func TestNewCluster(t *testing.T) {
 		defer ctrl.Finish()
 
 		mockStore := mock_store.NewMockStore(ctrl)
-		mockStore.EXPECT().GetClusterData(gomock.Any()).Return(nil, nil, errors.New("unable to fetch cluster data"))
+		mockStore.EXPECT().GetClusterData(gomock.Any(), false).Return(nil, nil, errors.New("unable to fetch cluster data"))
 
 		_, err := NewCluster("test", Config{}, mockStore)
 
@@ -43,7 +43,7 @@ func TestNewCluster(t *testing.T) {
 		defer ctrl.Finish()
 
 		mockStore := mock_store.NewMockStore(ctrl)
-		mockStore.EXPECT().GetClusterData(gomock.Any()).Return(nil, nil, nil)
+		mockStore.EXPECT().GetClusterData(gomock.Any(), false).Return(nil, nil, nil)
 
 		_, err := NewCluster("test", Config{}, mockStore)
 
@@ -58,7 +58,7 @@ func TestNewCluster(t *testing.T) {
 		cd := &cluster.ClusterData{}
 
 		mockStore := mock_store.NewMockStore(ctrl)
-		mockStore.EXPECT().GetClusterData(gomock.Any()).Return(cd, nil, nil)
+		mockStore.EXPECT().GetClusterData(gomock.Any(), false).Return(cd, nil, nil)
 
 		expected := Cluster{name: "test", cd: cd}
 

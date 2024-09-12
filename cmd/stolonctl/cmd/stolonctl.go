@@ -98,7 +98,7 @@ func die(format string, a ...interface{}) {
 }
 
 func getClusterData(e store.Store) (*cluster.ClusterData, *store.KVPair, error) {
-	cd, pair, err := e.GetClusterData(context.TODO())
+	cd, pair, err := e.GetClusterData(context.TODO(), false)
 	if err != nil {
 		return nil, nil, fmt.Errorf("cannot get cluster data: %v", err)
 	}

@@ -1345,7 +1345,7 @@ func TestFailedStandby(t *testing.T) {
 		t.Fatalf("expected 2 DBs in cluster data: %v", err)
 	}
 
-	cd, _, err := sm.GetClusterData(context.TODO())
+	cd, _, err := sm.GetClusterData(context.TODO(), false)
 	if err != nil {
 		t.Fatalf("unexpected err: %v", err)
 	}
@@ -1647,7 +1647,7 @@ func testKeeperRemovalStolonCtl(t *testing.T, syncRepl bool) {
 	}
 
 	// get current stanbdys[0] db uid
-	cd, _, err := sm.GetClusterData(context.TODO())
+	cd, _, err := sm.GetClusterData(context.TODO(), false)
 	if err != nil {
 		t.Fatalf("unexpected err: %v", err)
 	}
@@ -1735,7 +1735,7 @@ func TestStandbyCantSync(t *testing.T) {
 	}
 
 	// get current stanbdys[0] db uid
-	cd, _, err := sm.GetClusterData(context.TODO())
+	cd, _, err := sm.GetClusterData(context.TODO(), false)
 	if err != nil {
 		t.Fatalf("unexpected err: %v", err)
 	}
@@ -1791,7 +1791,7 @@ func TestStandbyCantSync(t *testing.T) {
 	// check that the current stanbdys[0] db uid is different. This means the
 	// sentinel found that standbys[0] won't sync due to missing wals and asked
 	// the keeper to resync (defining e new db in the cluster data)
-	cd, _, err = sm.GetClusterData(context.TODO())
+	cd, _, err = sm.GetClusterData(context.TODO(), false)
 	if err != nil {
 		t.Fatalf("unexpected err: %v", err)
 	}

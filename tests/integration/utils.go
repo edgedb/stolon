@@ -1114,13 +1114,13 @@ func (ts *TestStore) WaitDown(timeout time.Duration) error {
 }
 
 func WaitClusterDataUpdated(e *store.KVBackedStore, timeout time.Duration) error {
-	icd, _, err := e.GetClusterData(context.TODO())
+	icd, _, err := e.GetClusterData(context.TODO(), false)
 	if err != nil {
 		return fmt.Errorf("unexpected err: %v", err)
 	}
 	start := time.Now()
 	for time.Now().Add(-timeout).Before(start) {
-		cd, _, err := e.GetClusterData(context.TODO())
+		cd, _, err := e.GetClusterData(context.TODO(), false)
 		if err != nil || cd == nil {
 			goto end
 		}
@@ -1136,7 +1136,7 @@ func WaitClusterDataUpdated(e *store.KVBackedStore, timeout time.Duration) error
 func WaitClusterDataWithMaster(e *store.KVBackedStore, timeout time.Duration) (string, error) {
 	start := time.Now()
 	for time.Now().Add(-timeout).Before(start) {
-		cd, _, err := e.GetClusterData(context.TODO())
+		cd, _, err := e.GetClusterData(context.TODO(), false)
 		if err != nil || cd == nil {
 			goto end
 		}
@@ -1152,7 +1152,7 @@ func WaitClusterDataWithMaster(e *store.KVBackedStore, timeout time.Duration) (s
 func WaitClusterDataMaster(master string, e *store.KVBackedStore, timeout time.Duration) error {
 	start := time.Now()
 	for time.Now().Add(-timeout).Before(start) {
-		cd, _, err := e.GetClusterData(context.TODO())
+		cd, _, err := e.GetClusterData(context.TODO(), false)
 		if err != nil || cd == nil {
 			goto end
 		}
@@ -1170,7 +1170,7 @@ func WaitClusterDataMaster(master string, e *store.KVBackedStore, timeout time.D
 func WaitClusterDataKeeperInitialized(keeperUID string, e *store.KVBackedStore, timeout time.Duration) error {
 	start := time.Now()
 	for time.Now().Add(-timeout).Before(start) {
-		cd, _, err := e.GetClusterData(context.TODO())
+		cd, _, err := e.GetClusterData(context.TODO(), false)
 		if err != nil || cd == nil {
 			goto end
 		}
@@ -1195,7 +1195,7 @@ func WaitClusterDataSynchronousStandbys(synchronousStandbys []string, e *store.K
 	sort.Strings(synchronousStandbys)
 	start := time.Now()
 	for time.Now().Add(-timeout).Before(start) {
-		cd, _, err := e.GetClusterData(context.TODO())
+		cd, _, err := e.GetClusterData(context.TODO(), false)
 		if err != nil || cd == nil {
 			goto end
 		}
@@ -1237,7 +1237,7 @@ func WaitClusterDataSynchronousStandbys(synchronousStandbys []string, e *store.K
 func WaitClusterPhase(e *store.KVBackedStore, phase cluster.ClusterPhase, timeout time.Duration) error {
 	start := time.Now()
 	for time.Now().Add(-timeout).Before(start) {
-		cd, _, err := e.GetClusterData(context.TODO())
+		cd, _, err := e.GetClusterData(context.TODO(), false)
 		if err != nil || cd == nil {
 			goto end
 		}
@@ -1253,7 +1253,7 @@ func WaitClusterPhase(e *store.KVBackedStore, phase cluster.ClusterPhase, timeou
 func WaitNumDBs(e *store.KVBackedStore, n int, timeout time.Duration) error {
 	start := time.Now()
 	for time.Now().Add(-timeout).Before(start) {
-		cd, _, err := e.GetClusterData(context.TODO())
+		cd, _, err := e.GetClusterData(context.TODO(), false)
 		if err != nil || cd == nil {
 			goto end
 		}
@@ -1269,7 +1269,7 @@ func WaitNumDBs(e *store.KVBackedStore, n int, timeout time.Duration) error {
 func WaitStandbyKeeper(e *store.KVBackedStore, keeperUID string, timeout time.Duration) error {
 	start := time.Now()
 	for time.Now().Add(-timeout).Before(start) {
-		cd, _, err := e.GetClusterData(context.TODO())
+		cd, _, err := e.GetClusterData(context.TODO(), false)
 		if err != nil || cd == nil {
 			goto end
 		}
@@ -1291,7 +1291,7 @@ func WaitStandbyKeeper(e *store.KVBackedStore, keeperUID string, timeout time.Du
 func WaitClusterDataKeepers(keepersUIDs []string, e *store.KVBackedStore, timeout time.Duration) error {
 	start := time.Now()
 	for time.Now().Add(-timeout).Before(start) {
-		cd, _, err := e.GetClusterData(context.TODO())
+		cd, _, err := e.GetClusterData(context.TODO(), false)
 		if err != nil || cd == nil {
 			goto end
 		}
@@ -1325,7 +1325,7 @@ func WaitClusterSyncedXLogPos(keepers []*TestKeeper, xLogPos uint64, e *store.KV
 	for time.Now().Add(-timeout).Before(start) {
 		c := 0
 		curXLogPos := uint64(0)
-		cd, _, err := e.GetClusterData(context.TODO())
+		cd, _, err := e.GetClusterData(context.TODO(), false)
 		if err != nil || cd == nil {
 			goto end
 		}
@@ -1364,7 +1364,7 @@ func WaitClusterDataEnabledProxiesNum(e *store.KVBackedStore, n int, timeout tim
 	// and check for them instead of relying only on the number of proxies
 	start := time.Now()
 	for time.Now().Add(-timeout).Before(start) {
-		cd, _, err := e.GetClusterData(context.TODO())
+		cd, _, err := e.GetClusterData(context.TODO(), false)
 		if err != nil || cd == nil {
 			goto end
 		}

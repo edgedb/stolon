@@ -99,7 +99,7 @@ func readClusterdata(cmd *cobra.Command, args []string) {
 }
 
 func isSafeToWriteClusterData(store store.Store) error {
-	if cd, _, err := store.GetClusterData(context.TODO()); err != nil {
+	if cd, _, err := store.GetClusterData(context.TODO(), false); err != nil {
 		return err
 	} else if cd != nil {
 		if !writeClusterdataOpts.forceYes {

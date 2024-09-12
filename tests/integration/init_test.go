@@ -144,7 +144,7 @@ func testInitNew(t *testing.T, merge bool) {
 		t.Fatalf("unexpected err: %v", err)
 	}
 
-	cd, _, err := sm.GetClusterData(context.TODO())
+	cd, _, err := sm.GetClusterData(context.TODO(), false)
 	if err != nil {
 		t.Fatalf("unexpected err: %v", err)
 	}
@@ -286,7 +286,7 @@ func testInitExisting(t *testing.T, merge bool) {
 		t.Fatalf("expected archive_mode empty")
 	}
 
-	cd, _, err := sm.GetClusterData(context.TODO())
+	cd, _, err := sm.GetClusterData(context.TODO(), false)
 	if err != nil {
 		t.Fatalf("unexpected err: %v", err)
 	}
@@ -453,7 +453,7 @@ func TestInitialClusterSpec(t *testing.T) {
 		t.Fatal("expected cluster in initializing phase")
 	}
 
-	cd, _, err := sm.GetClusterData(context.TODO())
+	cd, _, err := sm.GetClusterData(context.TODO(), false)
 	if err != nil {
 		t.Fatalf("unexpected err: %v", err)
 	}

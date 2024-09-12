@@ -98,7 +98,7 @@ func TestSentinelEnabledProxies(t *testing.T) {
 	t.Logf("stopping sentinel")
 	ts.Stop()
 
-	cd, _, err := sm.GetClusterData(context.TODO())
+	cd, _, err := sm.GetClusterData(context.TODO(), false)
 	if err != nil {
 		t.Fatalf("unexpected err: %v", err)
 	}
@@ -119,7 +119,7 @@ func TestSentinelEnabledProxies(t *testing.T) {
 	t.Logf("clusterdata changed")
 
 	// check that the enabled proxies aren't changed (same Proxy Generation and same EnabledProxies)
-	cd, _, err = sm.GetClusterData(context.TODO())
+	cd, _, err = sm.GetClusterData(context.TODO(), false)
 	if err != nil {
 		t.Fatalf("unexpected err: %v", err)
 	}

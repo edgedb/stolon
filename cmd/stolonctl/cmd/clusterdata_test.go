@@ -75,7 +75,7 @@ func TestWriteClusterdata(t *testing.T) {
 		reader := strings.NewReader("{}")
 		store := mock_store.NewMockStore(ctrl)
 
-		store.EXPECT().GetClusterData(gomock.Any()).Return(nil, nil, fmt.Errorf("Error in getting cluster data"))
+		store.EXPECT().GetClusterData(gomock.Any(), false).Return(nil, nil, fmt.Errorf("Error in getting cluster data"))
 
 		err := writeClusterdata(reader, store)
 
@@ -97,7 +97,7 @@ func TestWriteClusterdata(t *testing.T) {
 
 		reader := strings.NewReader("{}")
 		store := mock_store.NewMockStore(ctrl)
-		store.EXPECT().GetClusterData(gomock.Any()).Return(&cluster.ClusterData{}, nil, nil)
+		store.EXPECT().GetClusterData(gomock.Any(), false).Return(&cluster.ClusterData{}, nil, nil)
 
 		err := writeClusterdata(reader, store)
 
@@ -121,7 +121,7 @@ func TestWriteClusterdata(t *testing.T) {
 		reader := strings.NewReader("{}")
 		store := mock_store.NewMockStore(ctrl)
 		cd := &cluster.ClusterData{}
-		store.EXPECT().GetClusterData(gomock.Any()).Return(cd, nil, nil)
+		store.EXPECT().GetClusterData(gomock.Any(), false).Return(cd, nil, nil)
 		store.EXPECT().PutClusterData(gomock.Any(), cd).Return(fmt.Errorf("error while uploading the cluster data"))
 
 		err := writeClusterdata(reader, store)
@@ -146,7 +146,7 @@ func TestWriteClusterdata(t *testing.T) {
 		reader := strings.NewReader("{}")
 		store := mock_store.NewMockStore(ctrl)
 		cd := &cluster.ClusterData{}
-		store.EXPECT().GetClusterData(gomock.Any()).Return(cd, nil, nil)
+		store.EXPECT().GetClusterData(gomock.Any(), false).Return(cd, nil, nil)
 		store.EXPECT().PutClusterData(gomock.Any(), cd).Return(nil)
 
 		err := writeClusterdata(reader, store)

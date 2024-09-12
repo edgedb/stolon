@@ -1951,6 +1951,9 @@ func (s *Sentinel) clusterSentinelCheck(pctx context.Context) bool {
 	newcd, err = s.updateCluster(newcd, activeProxiesInfos)
 	if err != nil {
 		log.Errorw("failed to update cluster data", zap.Error(err))
+		// On the first run, it'll usually fail because updateKeepersStatus() won't change new keepers states.
+		// So we just skip sleeping now to update the new keeper states in the next iteration sooner.
+		shouldSleep = !firstRun
 		goto nextIteration
 	}
 	log.Debugf("newcd dump after updateCluster: %s", spew.Sdump(newcd))

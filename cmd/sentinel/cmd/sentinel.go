@@ -1904,13 +1904,6 @@ func (s *Sentinel) clusterSentinelCheck(pctx context.Context) bool {
 		goto nextIteration
 	}
 
-	keepersInfo, err = s.e.GetKeepersInfo(pctx, false)
-	if err != nil {
-		log.Errorw("cannot get keepers info", zap.Error(err))
-		goto nextIteration
-	}
-	log.Debugf("keepersInfo dump: %s", spew.Sdump(keepersInfo))
-
 	proxiesInfo, err = s.e.GetProxiesInfo(pctx)
 	if err != nil {
 		log.Errorw("failed to get proxies info", zap.Error(err))
@@ -1942,6 +1935,14 @@ func (s *Sentinel) clusterSentinelCheck(pctx context.Context) bool {
 		// Update db convergence timers since its the first run
 		s.updateDBConvergenceInfos(cd)
 	}
+
+	// First run will wait until any keeper is registered
+	keepersInfo, err = s.e.GetKeepersInfo(pctx, firstRun)
+	if err != nil {
+		log.Errorw("cannot get keepers info", zap.Error(err))
+		goto nextIteration
+	}
+	log.Debugf("keepersInfo dump: %s", spew.Sdump(keepersInfo))
 
 	newcd, newKeeperInfoHistories = s.updateKeepersStatus(cd, keepersInfo, firstRun)
 	log.Debugf("newcd dump after updateKeepersStatus: %s", spew.Sdump(newcd))
